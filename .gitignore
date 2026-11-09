@@ -203,6 +203,13 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Module 1 runtime data and generated models
+landmarks.csv
+model_module1.joblib
+confusion_matrix.png
+hand_landmarker.task
+hand_landmarker.task.download
+
 # Ruff stuff:
 .ruff_cache/
 
