@@ -1,0 +1,32 @@
+{
+  "n_frames": 1023,
+  "classes": [
+    "A",
+    "B",
+    "C"
+  ],
+  "signers": [
+    "A"
+  ],
+  "models": {
+    "RandomForest": {
+      "random_split": {
+        "accuracy": 1.0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "macro_f1": 1.0
+      },
+      "latency_ms_per_prediction": 50.29311449965462
+    },
+    "MLP": {
+      "random_split": {
+        "accuracy": 1.0,
+        "macro_precision": 1.0,
+        "macro_recall": 1.0,
+        "macro_f1": 1.0
+      },
+      "latency_ms_per_prediction": 0.4694694996578619
+    }
+  },
+  "best_model": "RandomForest"
+}
