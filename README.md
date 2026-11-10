@@ -1,95 +1,75 @@
-# Quy trình làm project VSL Real-time Detection
+# Nhận diện Ngôn ngữ Ký hiệu Việt Nam (VSL) theo thời gian thực
 
-Áp dụng cho Topic 4 (Real-time sign language / gesture recognition), phiên bản tiếng Việt,
-dùng object detection (YOLOv8) thay vì DETR-from-scratch để vừa thời gian một kỳ học.
+Project môn Computer Vision (Topic 4). Chạy hoàn toàn trên camera laptop, không cần GPU.
 
-## Bước 0 — Chuẩn bị
+- **Module 1 – Bảng chữ cái:** MediaPipe Hands (21 điểm) → chuẩn hóa → Random Forest / MLP.
+- **Module 2 – Cử chỉ:** MediaPipe Hands + Pose → chuỗi 30 frame → LSTM / GRU (PyTorch).
+- **App tích hợp:** chuyển chế độ bằng phím 1/2, ghép chữ có dấu (Unicode NFC), đo độ trễ/FPS.
 
-```bash
-pip install ultralytics opencv-python
-```
+> **Trung thực về dữ liệu:** project KHÔNG kèm dữ liệu VSL thật. Bạn phải tự thu (script thu data đã có sẵn).
+> Các danh sách nhãn trong `labels_alphabet.txt` / `labels_gesture.txt` chỉ là **danh sách khởi đầu**,
+> hãy đối chiếu với video/từ điển VSL của nhóm và người am hiểu VSL rồi sửa lại.
 
-Cả nhóm thống nhất trước:
-- Danh sách 15–20 ký hiệu VSL sẽ làm (nên chọn ký hiệu tĩnh, dễ phân biệt hình dạng tay,
-  ví dụ lấy từ giáo trình VSL của ĐH Sư phạm Hà Nội hoặc bộ VOYA_VSL/VSignChat để tham khảo tên gọi).
-- Mỗi thành viên sẽ tự thu ảnh bằng camera laptop của mình cho TẤT CẢ các nhãn
-  (để có sự đa dạng người/ánh sáng/góc quay — quan trọng cho phần đánh giá signer-independent).
-
-## Bước 1 — Thu thập ảnh
-
-Chạy `1_collect_images.py`. Mỗi thành viên chạy trên máy mình, đổi `LABELS` cho khớp danh sách chung.
-Gộp toàn bộ ảnh của cả nhóm vào một thư mục `data/images/` trước khi gán nhãn.
-
-## Bước 2 — Gán nhãn bounding box (làm thủ công qua giao diện, không có script)
-
-Khuyên dùng **Roboflow** (miễn phí, web-based, dễ hơn label-studio cho nhóm mới bắt đầu):
-
-1. Tạo project mới trên roboflow.com, loại "Object Detection".
-2. Upload toàn bộ ảnh trong `data/images/`.
-3. Vẽ bounding box quanh bàn tay cho từng ảnh, gán đúng nhãn ký hiệu.
-4. Dùng tính năng "Generate" → chia train/val (khuyên 80/20) → có thể bật augmentation
-   (flip, brightness) để tăng dữ liệu nếu ảnh gốc ít.
-5. Export dataset ở định dạng **YOLOv8**, tải về, giải nén sao cho khớp cấu trúc:
-
-```
-data/
-  images/
-    train/
-    val/
-  labels/
-    train/
-    val/
-```
-
-Thay thế cho `data/` mà `1_collect_images.py` tạo ra.
-
-Nếu nhóm muốn dùng LabelImg (chạy local, không cần internet) cũng được — export cùng định dạng YOLO (.txt).
-
-## Bước 3 — Sửa `data.yaml`
-
-Cập nhật đúng thứ tự và tên các nhãn (`names:`) khớp với danh sách `LABELS` đã dùng ở bước 1.
-
-## Bước 4 — Huấn luyện
+## 1. Cài đặt
 
 ```bash
-python 2_train.py
+python --version        # khuyên dùng Python 3.10 - 3.12 (bản mới hơn vẫn chạy được)
+python -m venv venv
+venv\Scripts\activate           # Windows   (Mac/Linux: source venv/bin/activate)
+pip install -r requirements.txt
+python selftest.py              # tự kiểm tra, KHÔNG cần camera (lần đầu sẽ tự tải 2 file model MediaPipe ~13MB)
+python selftest.py --camera     # kiểm tra camera + MediaPipe: đưa tay vào khung hình, bấm q
 ```
 
-Theo dõi `runs/detect/vsl_yolov8n/results.png` để xem đường cong loss/mAP.
-Nếu mAP thấp hoặc quá overfit, quay lại tăng số ảnh/nhãn hoặc chỉnh augmentation ở Roboflow.
+Lỗi cũ `module 'mediapipe' has no attribute 'solutions'` đã được xử lý: code tự dùng API mới (MediaPipe Tasks)
+khi bản mediapipe không còn `mp.solutions`. Nếu máy không tải được model, tải tay 2 file này vào `models/mediapipe/`:
 
-## Bước 5 — Demo real-time
+- hand: https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+- pose: https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
 
-```bash
-python 3_realtime.py
-```
-(nhớ sửa `CHECKPOINT_PATH` trỏ đúng tới `best.pt` vừa train ra)
+## 2. Quy trình làm việc
 
-## Gợi ý cho phần "Extensions" trong đề bài
+| Bước | Lệnh                                                | Kết quả                                                |
+| ------ | ---------------------------------------------------- | -------------------------------------------------------- |
+| 0      | sửa `labels_alphabet.txt`, `labels_gesture.txt` | danh sách lớp thống nhất của nhóm                  |
+| 1      | `python collect_alphabet.py --person A`            | `data/alphabet.csv`                                    |
+| 2      | `python collect_gesture.py --person A`             | `data/gesture/<nhãn>/*.npz`                           |
+| 3      | gom dữ liệu của các thành viên (xem mục 4)    | dữ liệu đủ nhiều người                            |
+| 4      | `python train_alphabet.py`                         | `models/alphabet_model.joblib`, `results/alphabet_*` |
+| 5      | `python train_gesture.py`                          | `models/gesture_model.pt`, `results/gesture_*`       |
+| 6      | `python app.py`                                    | demo thời gian thực + `results/latency.json`         |
 
-- **Signer-independent evaluation:** chia người quay thành 2 nhóm — nhóm A dùng để train,
-  nhóm B chỉ dùng để test — để đo model có generalize sang người lạ không.
-- **Confusion analysis:** dùng `model.val()` để lấy confusion matrix (`runs/detect/.../confusion_matrix.png`),
-  chỉ ra các ký hiệu hay bị nhầm với nhau.
-- **Latency:** script `3_realtime.py` đã in sẵn thời gian inference (ms) mỗi frame để bạn so sánh
-  giữa `yolov8n` (nhanh, nhẹ) và `yolov8s` (chính xác hơn, chậm hơn) — đúng hướng
-  "latency-vs-accuracy" mà đề bài nhắc tới.
+### Thu dữ liệu Module 1 (chữ cái)
 
-## Module 1 — Nhận diện chữ cái bằng landmark
+- Phím: `r` ghi/dừng · `n`/`p` đổi nhãn · `u` hoàn tác lần ghi vừa rồi · `q` thoát.
+- Mỗi nhãn ~250 frame (~8 giây) mỗi người. **Giữ đúng ký hiệu**, nhưng đổi nhẹ khoảng cách, góc cổ tay, vị trí trong khung hình.
+- Ký hiệu hình chữ làm trước, sau đó mới tới dấu mũ/móc/trăng, rồi dấu thanh (app ghép theo thứ tự đó).
 
-Module 1 dùng các nhãn trong `labels.txt`, thu tọa độ bàn tay từ webcam rồi huấn luyện
-classifier. Chạy các lệnh sau trong PowerShell tại thư mục project:
+### Thu dữ liệu Module 2 (cử chỉ)
 
-```powershell
-python -m pip install "mediapipe==0.10.35" numpy pandas scikit-learn matplotlib joblib
-python collect_landmarks.py --person A
-python train_module1.py
-python realtime_module1.py
-```
+- Phím: `SPACE` quay 1 mẫu (đếm ngược 2 giây rồi ghi 1,5 giây) · `n`/`p` đổi cử chỉ · `u` xoá mẫu vừa quay.
+- Ngồi xa camera đủ để thấy **cả hai vai và hai bàn tay**. Làm trọn cử chỉ trong ~1,5 giây.
+- Mỗi cử chỉ ~40–60 mẫu (cộng tất cả các người), thu từ ít nhất 3 người.
+- Nhãn `idle` (không ký hiệu) rất quan trọng: quay tay nghỉ, tay thả xuống, cử động ngẫu nhiên.
 
-Lần chạy đầu, script tự tải model bàn tay của MediaPipe (cần Internet). Trong cửa sổ thu dữ liệu,
-nhấn `r` để bắt đầu/dừng ghi nhãn, `n`/`p` để chuyển nhãn và `q` để thoát. Giữ mỗi ký hiệu
-trước camera cho đến khi thu đủ mẫu. Có thể chạy collector nhiều lần với mã người khác, ví dụ
-`--person B`, để đánh giá trên người chưa có trong dữ liệu. Cần có ít nhất hai nhãn và đủ mẫu
-cho mỗi nhãn trước khi huấn luyện. Khi realtime chạy, giữ ký hiệu ổn định để thêm chữ; nhấn `q`
-để thoát.
+## 3. Đánh giá cho báo cáo (Section V)
+
+- `results/alphabet_metrics.json`, `results/gesture_metrics.json`: accuracy, macro precision/recall/F1,
+  accuracy từng người bị giữ lại (leave-one-signer-out), độ trễ dự đoán, số tham số. → điền **Bảng III**.
+- `results/alphabet_confusion.png`, `results/gesture_confusion_lstm.png`, `..._gru.png`: ma trận nhầm lẫn → mục Discussion.
+- `results/latency.json`: độ trễ/FPS của pipeline thật, tạo ra khi thoát `app.py`.
+- JSON còn có điểm "chia ngẫu nhiên" để so sánh mức giảm khi đánh giá trên người lạ (câu hỏi thứ 3 ở mục Discussion).
+
+## 4. Gom dữ liệu của nhiều thành viên
+
+- Chữ cái: mỗi người gửi file `data/alphabet.csv`; nối lại thành một file (giữ **một** dòng tiêu đề).
+- Cử chỉ: copy các thư mục `data/gesture/<nhãn>/` của mọi người vào chung một chỗ (tên file đã có mã người).
+- Mã `--person` phải **khác nhau** giữa các thành viên, vì đánh giá leave-one-signer-out dựa vào mã này.
+
+## 5. Lưu ý & giới hạn
+
+- Camera bị lật gương khi thu và khi chạy app (giống nhau). Người thuận tay trái ký hiệu đối xứng sẽ cho kết quả kém hơn.
+- Hệ thống chỉ nhận diện các lớp đã train, không dịch toàn bộ VSL, không xử lý biểu cảm khuôn mặt.
+- Dấu có chuyển động tay nên đưa vào `labels_gesture.txt`, không đặt trong `labels_alphabet.txt`.
+- Chưa có dữ liệu thật thì chưa có con số nào: đừng ghi accuracy vào báo cáo trước khi chạy `train_*.py` trên dữ liệu của nhóm.
+- Muốn train nhanh/thử: `python train_gesture.py --quick`. Có GPU NVIDIA thì PyTorch tự dùng.

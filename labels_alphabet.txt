@@ -1,0 +1,31 @@
+A
+B
+C
+#D
+#Đ
+#E
+#G
+#H
+#I
+#K
+#L
+#M
+#N
+#O
+#P
+#Q
+#R
+#S
+#T
+#U
+#V
+#X
+#Y
+#DAU_SAC 
+#DAU_HUYEN
+#DAU_HOI
+#DAU_NGA 
+#DAU_NANG  
+# DAU_MU(Â Ê Ô) 
+# DAU_MOC (Ơ Ư)
+# DAU_TRANG(Ă)

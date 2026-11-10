@@ -1,0 +1,47 @@
+{
+  "n_samples": 4,
+  "classes": [
+    "idle",
+    "xin chào",
+    "vui",
+    "buồn"
+  ],
+  "signers": [
+    "A"
+  ],
+  "models": {
+    "lstm": {
+      "accuracy": 0.0,
+      "macro_precision": 0.0,
+      "macro_recall": 0.0,
+      "macro_f1": 0.0,
+      "per_signer_accuracy": {
+        "random_split": 0.0
+      },
+      "evaluation": "random_split",
+      "latency_ms_per_sequence_cpu": 0.9888279996812344,
+      "parameters": 168196,
+      "train_eval_seconds": 3.4049272537231445
+    },
+    "gru": {
+      "accuracy": 0.0,
+      "macro_precision": 0.0,
+      "macro_recall": 0.0,
+      "macro_f1": 0.0,
+      "per_signer_accuracy": {
+        "random_split": 0.0
+      },
+      "evaluation": "random_split",
+      "latency_ms_per_sequence_cpu": 2.905872000847012,
+      "parameters": 126340,
+      "train_eval_seconds": 1.2154076099395752
+    }
+  },
+  "config": {
+    "epochs": 40,
+    "hidden": 96,
+    "layers": 2,
+    "aug_factor": 3
+  },
+  "best_model": "lstm"
+}
