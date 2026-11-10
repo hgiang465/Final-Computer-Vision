@@ -52,24 +52,5 @@ khi bản mediapipe không còn `mp.solutions`. Nếu máy không tải được
 - Mỗi cử chỉ ~40–60 mẫu (cộng tất cả các người), thu từ ít nhất 3 người.
 - Nhãn `idle` (không ký hiệu) rất quan trọng: quay tay nghỉ, tay thả xuống, cử động ngẫu nhiên.
 
-## 3. Đánh giá cho báo cáo (Section V)
-
-- `results/alphabet_metrics.json`, `results/gesture_metrics.json`: accuracy, macro precision/recall/F1,
-  accuracy từng người bị giữ lại (leave-one-signer-out), độ trễ dự đoán, số tham số. → điền **Bảng III**.
-- `results/alphabet_confusion.png`, `results/gesture_confusion_lstm.png`, `..._gru.png`: ma trận nhầm lẫn → mục Discussion.
-- `results/latency.json`: độ trễ/FPS của pipeline thật, tạo ra khi thoát `app.py`.
-- JSON còn có điểm "chia ngẫu nhiên" để so sánh mức giảm khi đánh giá trên người lạ (câu hỏi thứ 3 ở mục Discussion).
-
-## 4. Gom dữ liệu của nhiều thành viên
-
-- Chữ cái: mỗi người gửi file `data/alphabet.csv`; nối lại thành một file (giữ **một** dòng tiêu đề).
-- Cử chỉ: copy các thư mục `data/gesture/<nhãn>/` của mọi người vào chung một chỗ (tên file đã có mã người).
-- Mã `--person` phải **khác nhau** giữa các thành viên, vì đánh giá leave-one-signer-out dựa vào mã này.
-
-## 5. Lưu ý & giới hạn
-
-- Camera bị lật gương khi thu và khi chạy app (giống nhau). Người thuận tay trái ký hiệu đối xứng sẽ cho kết quả kém hơn.
-- Hệ thống chỉ nhận diện các lớp đã train, không dịch toàn bộ VSL, không xử lý biểu cảm khuôn mặt.
-- Dấu có chuyển động tay nên đưa vào `labels_gesture.txt`, không đặt trong `labels_alphabet.txt`.
-- Chưa có dữ liệu thật thì chưa có con số nào: đừng ghi accuracy vào báo cáo trước khi chạy `train_*.py` trên dữ liệu của nhóm.
+ đừng ghi accuracy vào báo cáo trước khi chạy `train_*.py` trên dữ liệu của nhóm.
 - Muốn train nhanh/thử: `python train_gesture.py --quick`. Có GPU NVIDIA thì PyTorch tự dùng.
