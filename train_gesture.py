@@ -1,3 +1,10 @@
+"""Huấn luyện + đánh giá MODULE 2 (cử chỉ) từ data/gesture/*/*.npz bằng LSTM và GRU.
+
+Chạy:  python train_gesture.py                 (mặc định: so sánh LSTM và GRU, leave-one-signer-out)
+       python train_gesture.py --quick         (ít epoch, chạy thử nhanh)
+       python train_gesture.py --epochs 60 --hidden 128 --aug 4
+Kết quả: models/gesture_model.pt, results/gesture_metrics.json, results/gesture_confusion_<arch>.png
+"""
 import argparse
 import json
 import time
@@ -15,6 +22,8 @@ import config
 from features import load_labels, resample_by_time, sequence_features
 from gesture_model import SeqClassifier
 
+
+# ---------------------------------------------------------------- dữ liệu
 def load_samples(gesture_dir):
     samples = []
     for p in sorted(gesture_dir.glob("*/*.npz")):
@@ -29,11 +38,14 @@ def featurize(s):
 
 
 def augment(s, rng):
-    """Tăng cường dữ liệu trên landmark thô: đổi tốc độ/cắt thời gian, xoay nhẹ, nhiễu, rớt tay ngẫu nhiên."""
+    """Tăng cường dữ liệu trên landmark thô: đổi tốc độ, trượt thời gian, xoay nhẹ, nhiễu, rớt tay ngẫu nhiên."""
     T = s["hands"].shape[0]
     frac = rng.uniform(0.8, 1.0)
     start = rng.uniform(0, (1 - frac) * (T - 1))
     idx = np.clip(np.round(np.linspace(start, start + frac * (T - 1), T)).astype(int), 0, T - 1)
+    # trượt chuỗi theo thời gian (nét vẽ dấu có thể nằm sớm/muộn trong cửa sổ 1,5 giây), giữ nguyên frame biên
+    shift = int(round(rng.uniform(-0.25, 0.25) * T))
+    idx = idx[np.clip(np.arange(T) - shift, 0, T - 1)]
     hands, pose = s["hands"][idx].copy(), s["pose"][idx].copy()
     hp, pp = s["hand_present"][idx].copy(), s["pose_present"][idx].copy()
     ang = np.deg2rad(np.clip(rng.normal(0, 6), -12, 12))
