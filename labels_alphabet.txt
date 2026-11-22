@@ -26,6 +26,8 @@ C
 #DAU_HOI
 #DAU_NGA 
 #DAU_NANG  
-# DAU_MU(Â Ê Ô) 
-# DAU_MOC (Ơ Ư)
-# DAU_TRANG(Ă)
+DAU_MU(Â Ê Ô)
+DAU_TRANG(Ă) 
+DAU_MOC (Ơ Ư)
+# idle = bàn tay KHÔNG làm chữ cái nào (tay nghỉ, nắm lỏng, các hình tay linh tinh). Rất nên thu để app đỡ đoán bừa.
+idle

@@ -4,7 +4,9 @@ import numpy as np
 # Các điểm pose dùng cho module cử chỉ: mũi, 2 vai, 2 khuỷu, 2 cổ tay (chỉ số MediaPipe Pose)
 POSE_IDX = [0, 11, 12, 13, 14, 15, 16]
 ALPHABET_DIM = 63                 # 21 điểm x 3
-GESTURE_DIM = 2 * 63 + 4 + 2 * len(POSE_IDX)   # 126 hình dạng tay + 4 vị trí cổ tay + 14 tư thế = 144
+# 126 hình dạng tay + 4 vị trí cổ tay + 4 vị trí đầu ngón trỏ + 4 vận tốc cổ tay + 4 vận tốc đầu ngón trỏ
+# + 14 tư thế thân trên = 156.  (vị trí/vận tốc giúp phân biệt hướng nét vẽ của dấu sắc/huyền/hỏi/ngã/nặng)
+GESTURE_DIM = 2 * 63 + 4 + 4 + 4 + 4 + 2 * len(POSE_IDX)
 
 
 def load_labels(path):
@@ -60,14 +62,25 @@ def sequence_features(hands, hand_present, pose, pose_present):
     width = np.maximum(width, 1e-3)
     pm = pp.astype(np.float32)
 
-    loc = (hands[:, :, 0, :2] - center[:, None, :]) / width[:, None, None]   # (T,2,2)
-    loc = loc * hp[..., None] * pm[:, None, None]
-    loc = loc.reshape(T, 4)
+    def located(point_idx):
+        p = (hands[:, :, point_idx, :2] - center[:, None, :]) / width[:, None, None]   # (T,2,2)
+        return p * hp[..., None] * pm[:, None, None]
+
+    def velocity(p):
+        v = np.zeros_like(p)
+        if T > 1:
+            both = (hp[1:] & hp[:-1])[..., None]                   # chỉ tính khi cả 2 frame đều thấy tay
+            v[1:] = (p[1:] - p[:-1]) * both
+        return v
+
+    loc_wrist, loc_tip = located(0), located(8)                    # cổ tay, đầu ngón trỏ so với vai
+    vel_wrist, vel_tip = velocity(loc_wrist), velocity(loc_tip)
 
     body = (pose[:, POSE_IDX, :2] - center[:, None, :]) / width[:, None, None]
     body = (body * pm[:, None, None]).reshape(T, 2 * len(POSE_IDX))
 
-    return np.concatenate([shape, loc, body], axis=1).astype(np.float32)
+    return np.concatenate([shape, loc_wrist.reshape(T, 4), loc_tip.reshape(T, 4), vel_wrist.reshape(T, 4),
+                           vel_tip.reshape(T, 4), body], axis=1).astype(np.float32)
 
 
 def resample_by_time(times, n_out):
