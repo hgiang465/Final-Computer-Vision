@@ -1,37 +1,24 @@
-# Mỗi dòng là 1 cử chỉ (có chuyển động). Dòng bắt đầu bằng # bị bỏ qua.
-# "idle" = KHÔNG có cử chỉ/dấu nào. Giữ ở dòng đầu. Khi thu "idle", hãy quay NHIỀU tình huống:
-#   - tay nghỉ / tay thả xuống / gãi đầu / cử động ngẫu nhiên
-#   - GIỮ YÊN một hình chữ cái (vì lúc đánh vần tay đứng yên, app không được hiểu nhầm là cử chỉ)
-#   - vừa đổi từ chữ cái này sang chữ cái khác
 idle
-# --- 5 DẤU THANH: ký hiệu ĐỘNG. Tên nhãn PHẢI đúng như dưới đây để app tự ghép vào chữ cái ---
-
-# --- Các từ giao tiếp. Hãy đối chiếu từng từ với từ điển/video VSL, sửa/thêm/bớt cho đủ 20-50 cử chỉ ---
-#tôi
-#bạn
+bạn
 xin chào
-#cảm ơn
-#xin lỗi
-#tạm biệt
-#có
-#không
-#yêu
-#giúp đỡ
-#tên
+cảm ơn
+xin lỗi
+tạm biệt
+có
+không
+yêu
+giúp đỡ
+tên
 vui
 buồn
-#đói
-#khát
-#ăn
-#uống
-#khỏe
-#đau
+đói
+khát
+ăn
+uống
+khỏe
+đau
 DAU_SAC
 DAU_HUYEN
 DAU_HOI
 DAU_NGA
 DAU_NANG
-# DAU_MU
-# DAU_MOC
-# DAU_TRANG
-# DAU_GACH
