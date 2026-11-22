@@ -1,56 +1,137 @@
-# Nhận diện Ngôn ngữ Ký hiệu Việt Nam (VSL) theo thời gian thực
+# Nhận diện Ngôn ngữ Ký hiệu Việt Nam (VSL)
 
-Project môn Computer Vision (Topic 4). Chạy hoàn toàn trên camera laptop, không cần GPU.
+Dự án môn Thị giác máy tính nhận diện ký hiệu qua webcam và ghép kết quả thành câu.
 
-- **Module 1 – Bảng chữ cái:** MediaPipe Hands (21 điểm) → chuẩn hóa → Random Forest / MLP.
-- **Module 2 – Cử chỉ:** MediaPipe Hands + Pose → chuỗi 30 frame → LSTM / GRU (PyTorch).
-- **App tích hợp:** chuyển chế độ bằng phím 1/2, ghép chữ có dấu (Unicode NFC), đo độ trễ/FPS.
+## Tính năng
 
-> **Trung thực về dữ liệu:** project KHÔNG kèm dữ liệu VSL thật. Bạn phải tự thu (script thu data đã có sẵn).
-> Các danh sách nhãn trong `labels_alphabet.txt` / `labels_gesture.txt` chỉ là **danh sách khởi đầu**,
-> hãy đối chiếu với video/từ điển VSL của nhóm và người am hiểu VSL rồi sửa lại.
+- **Bảng chữ cái:** MediaPipe Hands trích xuất 21 điểm bàn tay; mô hình Random Forest hoặc MLP phân loại ký hiệu tĩnh.
+- **Cử chỉ và dấu:** MediaPipe Hands + Pose trích xuất landmark trên từng khung hình; ứng dụng lấy mẫu lại thành chuỗi 30 khung hình để mô hình LSTM hoặc GRU phân loại.
+- **Ghép câu:** `sentence_app.py` kết hợp chữ cái, dấu và từ/cử chỉ thành câu tiếng Việt (Unicode NFC).
 
-## 1. Cài đặt
+> **Dữ liệu:** Repository không chứa bộ dữ liệu VSL thực tế. Hãy tự thu thập dữ liệu của nhóm. Các nhãn trong
+> `config/labels_alphabet.txt` và `config/labels_gesture.txt` chỉ là danh sách khởi đầu; cần thống nhất nhãn và cách ký hiệu
+> với người am hiểu VSL trước khi thu dữ liệu.
 
-```bash
-python --version        # khuyên dùng Python 3.10 - 3.12 (bản mới hơn vẫn chạy được)
-python -m venv venv
-venv\Scripts\activate           # Windows   (Mac/Linux: source venv/bin/activate)
-pip install -r requirements.txt
-python selftest.py              # tự kiểm tra, KHÔNG cần camera (lần đầu sẽ tự tải 2 file model MediaPipe ~13MB)
-python selftest.py --camera     # kiểm tra camera + MediaPipe: đưa tay vào khung hình, bấm q
+## Cấu trúc dự án
+
+```text
+.
+├── config/       # Danh sách nhãn
+├── data/         # Dữ liệu tự thu thập
+├── models/       # Model đã huấn luyện và model MediaPipe
+├── results/      # Metrics, biểu đồ và kết quả chạy
+├── scripts/      # Mã thu thập dữ liệu, huấn luyện, ứng dụng và tự kiểm tra
+├── vsl/          # Module lõi: cấu hình, đặc trưng, dự đoán, giao diện
+├── *.py          # Lệnh khởi chạy tương thích từ thư mục gốc
+├── README.md
+└── requirements.txt
 ```
 
-Lỗi cũ `module 'mediapipe' has no attribute 'solutions'` đã được xử lý: code tự dùng API mới (MediaPipe Tasks)
-khi bản mediapipe không còn `mp.solutions`. Nếu máy không tải được model, tải tay 2 file này vào `models/mediapipe/`:
+Chạy các lệnh từ thư mục gốc của dự án; các file `.py` ở gốc chuyển tiếp tới script tương ứng
+trong `scripts/`, nên cách gọi lệnh hiện tại không thay đổi.
 
-- hand: https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
-- pose: https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task
+## Yêu cầu
 
-## 2. Quy trình làm việc
+- Python 3.10–3.12 được khuyến nghị.
+- Webcam.
+- PyTorch để huấn luyện và nhận diện cử chỉ; ứng dụng chữ cái có thể chạy độc lập nếu chỉ có model chữ cái.
 
-| Bước | Lệnh                                                | Kết quả                                                |
-| ------ | ---------------------------------------------------- | -------------------------------------------------------- |
-| 0      | sửa `labels_alphabet.txt`, `labels_gesture.txt` | danh sách lớp thống nhất của nhóm                  |
-| 1      | `python collect_alphabet.py --person A`            | `data/alphabet.csv`                                    |
-| 2      | `python collect_gesture.py --person A`             | `data/gesture/<nhãn>/*.npz`                           |
-| 3      | gom dữ liệu của các thành viên (xem mục 4)    | dữ liệu đủ nhiều người                            |
-| 4      | `python train_alphabet.py`                         | `models/alphabet_model.joblib`, `results/alphabet_*` |
-| 5      | `python train_gesture.py`                          | `models/gesture_model.pt`, `results/gesture_*`       |
-| 6      | `python app.py`                                    | demo thời gian thực + `results/latency.json`         |
+## Cài đặt
 
-### Thu dữ liệu Module 1 (chữ cái)
+### Windows (PowerShell)
 
-- Phím: `r` ghi/dừng · `n`/`p` đổi nhãn · `u` hoàn tác lần ghi vừa rồi · `q` thoát.
-- Mỗi nhãn ~250 frame (~8 giây) mỗi người. **Giữ đúng ký hiệu**, nhưng đổi nhẹ khoảng cách, góc cổ tay, vị trí trong khung hình.
-- Ký hiệu hình chữ làm trước, sau đó mới tới dấu mũ/móc/trăng, rồi dấu thanh (app ghép theo thứ tự đó).
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
 
-### Thu dữ liệu Module 2 (cử chỉ)
+Kiểm tra cài đặt (không cần mở camera):
 
-- Phím: `SPACE` quay 1 mẫu (đếm ngược 2 giây rồi ghi 1,5 giây) · `n`/`p` đổi cử chỉ · `u` xoá mẫu vừa quay.
-- Ngồi xa camera đủ để thấy **cả hai vai và hai bàn tay**. Làm trọn cử chỉ trong ~1,5 giây.
-- Mỗi cử chỉ ~40–60 mẫu (cộng tất cả các người), thu từ ít nhất 3 người.
-- Nhãn `idle` (không ký hiệu) rất quan trọng: quay tay nghỉ, tay thả xuống, cử động ngẫu nhiên.
+```powershell
+python selftest.py
+```
 
- đừng ghi accuracy vào báo cáo trước khi chạy `train_*.py` trên dữ liệu của nhóm.
-- Muốn train nhanh/thử: `python train_gesture.py --quick`. Có GPU NVIDIA thì PyTorch tự dùng.
+Nếu PowerShell chặn kích hoạt môi trường, có thể chạy trực tiếp bằng Python trong venv:
+
+```powershell
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+MediaPipe thường tự tải các model cần thiết khi chạy lần đầu. Nếu tải tự động thất bại, tải các tệp dưới đây
+vào thư mục `models/mediapipe/`:
+
+- [hand_landmarker.task](https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task)
+- [pose_landmarker_lite.task](https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task)
+
+## Quy trình dữ liệu và huấn luyện
+
+1. Thống nhất nhãn trong `config/labels_alphabet.txt` và `config/labels_gesture.txt`.
+2. Thu dữ liệu chữ cái và cử chỉ theo hướng dẫn bên dưới.
+3. Huấn luyện từng mô hình:
+
+   ```bash
+   python train_alphabet.py
+   python train_gesture.py
+   ```
+4. Chạy ứng dụng:
+
+   ```bash
+   python sentence_app.py
+   ```
+
+Các mô hình được lưu ở `models/alphabet_model.joblib` và `models/gesture_model.pt`.
+Kết quả huấn luyện và biểu đồ được lưu trong `results/`.
+
+## Thu dữ liệu
+
+### Bảng chữ cái
+
+```bash
+python collect_alphabet.py --person A
+```
+
+- `r`: bắt đầu/dừng ghi nhãn hiện tại.
+- `n` / `p`: chuyển sang nhãn kế/trước.
+- `u`: hoàn tác lần ghi gần nhất.
+- `q`: thoát.
+
+Thu khoảng 250 khung hình cho mỗi nhãn, mỗi người. Giữ đúng ký hiệu nhưng thay đổi nhẹ vị trí,
+khoảng cách và góc cổ tay. Nên thu từ nhiều người để mô hình hoạt động tốt hơn với người mới.
+
+### Cử chỉ
+
+```bash
+python collect_gesture.py --person A
+```
+
+- `SPACE`: quay một mẫu (đếm ngược 2 giây, sau đó ghi khoảng 1,5 giây).
+- `n` / `p`: chuyển cử chỉ.
+- `u`: xóa mẫu vừa quay.
+- `q`: thoát.
+
+Ngồi đủ xa để camera thấy hai vai và hai bàn tay; thực hiện trọn cử chỉ trong khoảng 1,5 giây.
+Hướng tới 40–60 mẫu cho mỗi cử chỉ, tổng hợp từ ít nhất 3 người. Nhãn `idle` cũng quan trọng: hãy thu các tình huống không ký hiệu như tay nghỉ hoặc cử động ngẫu nhiên.
+
+## Sử dụng ứng dụng ghép câu
+
+Trong `sentence_app.py`, tay đứng yên được dùng để nhận diện chữ cái; chuyển động tay được dùng để nhận diện
+cử chỉ hoặc dấu. Giao diện hiển thị trạng thái tay, chữ đang được dự đoán, tiến trình giữ ổn định và câu hiện tại.
+
+- `SPACE`: kết thúc từ đang đánh vần.
+- `b`: hoàn tác bước cuối.
+- `c`: xóa câu.
+- `,` / `.`: giảm/tăng độ nhạy phát hiện chuyển động.
+- `q`: thoát.
+
+Nếu chỉ có một trong hai mô hình, ứng dụng dùng phần tương ứng. Để ghép câu đầy đủ, hãy huấn luyện cả hai mô hình.
+Khi báo cáo độ chính xác, chỉ sử dụng kết quả đo sau khi huấn luyện trên dữ liệu thực của nhóm.
+
+## Huấn luyện nhanh
+
+Để chạy thử huấn luyện cử chỉ với ít epoch hơn:
+
+```bash
+python train_gesture.py --quick
+```

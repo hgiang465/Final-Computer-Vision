@@ -2,8 +2,8 @@
 import joblib
 import numpy as np
 
-import config
-from features import hand_vector, resample_by_time, sequence_features
+from . import config
+from .features import hand_vector, resample_by_time, sequence_features
 
 
 class AlphabetPredictor:
@@ -23,7 +23,7 @@ class AlphabetPredictor:
 class GesturePredictor:
     def __init__(self, path=None):
         import torch                      # import muộn: chỉ cần khi dùng module cử chỉ
-        from gesture_model import SeqClassifier
+        from .gesture_model import SeqClassifier
         self.torch = torch
         ck = torch.load(path or config.GESTURE_MODEL, map_location="cpu", weights_only=False)
         self.classes = ck["classes"]

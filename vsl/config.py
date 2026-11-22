@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-CODE_DIR = Path(__file__).resolve().parent
+CODE_DIR = Path(__file__).resolve().parent.parent
 # VSL_HOME chỉ dùng cho selftest (để không đụng vào dữ liệu thật). Bình thường = thư mục project.
 ROOT = Path(os.environ.get("VSL_HOME", CODE_DIR))
 
@@ -16,8 +16,8 @@ GESTURE_DIR = DATA_DIR / "gesture"
 ALPHABET_MODEL = MODELS_DIR / "alphabet_model.joblib"
 GESTURE_MODEL = MODELS_DIR / "gesture_model.pt"
 
-LABELS_ALPHABET = CODE_DIR / "labels_alphabet.txt"
-LABELS_GESTURE = CODE_DIR / "labels_gesture.txt"
+LABELS_ALPHABET = CODE_DIR / "config" / "labels_alphabet.txt"
+LABELS_GESTURE = CODE_DIR / "config" / "labels_gesture.txt"
 
 CAMERA_INDEX = 0                 # camera laptop thường là 0; nếu sai thử 1, 2
 FRAME_WIDTH, FRAME_HEIGHT = 1280, 720
