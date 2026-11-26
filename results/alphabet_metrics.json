@@ -1,0 +1,68 @@
+{
+  "n_frames": 20000,
+  "classes": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "Đ",
+    "E",
+    "G",
+    "H",
+    "I",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "X",
+    "Y",
+    "DAU_MU(Â Ê Ô)",
+    "DAU_TRANG(Ă)",
+    "DAU_MOC (Ơ Ư)",
+    "idle"
+  ],
+  "signers": [
+    "A",
+    "B",
+    "C"
+  ],
+  "models": {
+    "RandomForest": {
+      "leave_one_signer_out": {
+        "accuracy": 0.76545,
+        "macro_precision": 0.7813916782872412,
+        "macro_recall": 0.7656790123456789,
+        "macro_f1": 0.7568836151097832,
+        "per_signer_accuracy": {
+          "A": 0.8682962962962963,
+          "B": 0.5312307692307693,
+          "C": 0.8881481481481481
+        }
+      },
+      "latency_ms_per_prediction": 12.30001749994699
+    },
+    "MLP": {
+      "leave_one_signer_out": {
+        "accuracy": 0.56035,
+        "macro_precision": 0.7063760197128025,
+        "macro_recall": 0.5630864197530864,
+        "macro_f1": 0.6009969444076128,
+        "per_signer_accuracy": {
+          "A": 0.8432592592592593,
+          "B": 0.05553846153846154,
+          "C": 0.7635555555555555
+        }
+      },
+      "latency_ms_per_prediction": 1.2913324998226017
+    }
+  },
+  "best_model": "RandomForest"
+}

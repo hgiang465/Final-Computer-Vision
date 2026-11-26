@@ -1,10 +1,3 @@
-"""Huấn luyện + đánh giá MODULE 2 (cử chỉ) từ data/gesture/*/*.npz bằng LSTM và GRU.
-
-Chạy:  python train_gesture.py                 (mặc định: so sánh LSTM và GRU, leave-one-signer-out)
-       python train_gesture.py --quick         (ít epoch, chạy thử nhanh)
-       python train_gesture.py --epochs 60 --hidden 128 --aug 4
-Kết quả: models/gesture_model.pt, results/gesture_metrics.json, results/gesture_confusion_<arch>.png
-"""
 import argparse
 import json
 import time
@@ -23,7 +16,6 @@ from vsl.features import load_labels, resample_by_time, sequence_features
 from vsl.gesture_model import SeqClassifier
 
 
-# ---------------------------------------------------------------- dữ liệu
 def load_samples(gesture_dir):
     samples = []
     for p in sorted(gesture_dir.glob("*/*.npz")):
@@ -71,7 +63,7 @@ def build_xy(samples, class_to_idx, aug_factor, rng):
     return np.stack(X).astype(np.float32), np.array(y, dtype=np.int64)
 
 
-# ---------------------------------------------------------------- huấn luyện
+#huấn luyện
 def train_model(Xtr, ytr, arch, num_classes, epochs, hidden, layers, device, seed=0, verbose=False):
     torch.manual_seed(seed)
     mean = Xtr.reshape(-1, Xtr.shape[-1]).mean(0)
@@ -183,17 +175,29 @@ def run(gesture_dir=None, models_dir=None, results_dir=None, archs=("lstm", "gru
                 model_cpu(x1)
         lat = (time.perf_counter() - t) / 50 * 1000
         n_params = sum(p.numel() for p in model.parameters())
+        evaluation = "leave_one_signer_out" if len(people) >= 2 else "random_split"
+        evaluation_label = "LOSO (giữ lại từng người)" if len(people) >= 2 else "chia ngẫu nhiên 80/20"
+        train_eval_seconds = float(time.time() - t0)
         report["models"][arch] = {**m, "per_signer_accuracy": per, "evaluation":
-                                  "leave_one_signer_out" if len(people) >= 2 else "random_split",
+                                  evaluation,
                                   "latency_ms_per_sequence_cpu": float(lat), "parameters": int(n_params),
-                                  "train_eval_seconds": float(time.time() - t0)}
-        print(f"  {arch.upper()}: acc={m['accuracy']:.3f} macroF1={m['macro_f1']:.3f} "
-              f"latency={lat:.2f}ms params={n_params}")
+                                  "train_eval_seconds": train_eval_seconds}
+        print(f"  Kết quả metrics ({evaluation_label}):")
+        print(f"    Accuracy:        {m['accuracy']:.3f}")
+        print(f"    Macro precision: {m['macro_precision']:.3f}")
+        print(f"    Macro recall:    {m['macro_recall']:.3f}")
+        print(f"    Macro F1:        {m['macro_f1']:.3f}")
+        print(f"    Accuracy từng người: {per}")
+        print(f"  Mô hình: {arch.upper()} | hidden={hidden} | layers={layers} | epochs={epochs} | aug={aug}")
+        print(f"    Latency CPU: {lat:.2f} ms/chuỗi")
+        print(f"    Parameters: {n_params:,}")
+        print(f"    Thời gian train + đánh giá: {train_eval_seconds:.1f} giây")
         cm = confusion_matrix(yt_all, yp_all, labels=list(range(len(classes))))
         plot_cm(cm, classes, f"Confusion matrix - {arch.upper()}", results_dir / f"gesture_confusion_{arch}.png")
         if m["macro_f1"] > best_f1:
             best_arch, best_f1 = arch, m["macro_f1"]
 
+    print(f"\nMô hình tốt nhất theo Macro F1: {best_arch.upper()} ({best_f1:.3f})")
     final_arch = final_arch or best_arch
     print(f"\nHuấn luyện lại {final_arch.upper()} trên toàn bộ dữ liệu để dùng cho app...")
     Xall, yall = build_xy(samples, c2i, aug, rng)
