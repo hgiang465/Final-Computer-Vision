@@ -1,8 +1,3 @@
-"""Tự kiểm tra cài đặt (KHÔNG cần camera, KHÔNG đụng vào dữ liệu thật của bạn).
-
-Chạy:  python selftest.py            kiểm tra thư viện + pipeline train/dự đoán bằng dữ liệu giả
-       python selftest.py --camera   kiểm tra thêm camera và MediaPipe (đưa bàn tay vào khung hình)
-"""
 import argparse
 import csv
 import os

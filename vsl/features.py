@@ -1,4 +1,3 @@
-"""Chuẩn hóa landmark và tạo vector đặc trưng. Thu data, train và app đều dùng CHUNG file này."""
 import numpy as np
 
 # Các điểm pose dùng cho module cử chỉ: mũi, 2 vai, 2 khuỷu, 2 cổ tay (chỉ số MediaPipe Pose)

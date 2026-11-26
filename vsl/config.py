@@ -1,15 +1,13 @@
-"""Cấu hình chung cho toàn bộ project."""
 import os
 from pathlib import Path
 
 CODE_DIR = Path(__file__).resolve().parent.parent
-# VSL_HOME chỉ dùng cho selftest (để không đụng vào dữ liệu thật). Bình thường = thư mục project.
 ROOT = Path(os.environ.get("VSL_HOME", CODE_DIR))
 
 DATA_DIR = ROOT / "data"
 MODELS_DIR = ROOT / "models"
 RESULTS_DIR = ROOT / "results"
-MP_MODELS_DIR = CODE_DIR / "models" / "mediapipe"   # file .task của MediaPipe (tự tải)
+MP_MODELS_DIR = CODE_DIR / "models" / "mediapipe"  
 
 ALPHABET_CSV = DATA_DIR / "alphabet.csv"
 GESTURE_DIR = DATA_DIR / "gesture"
@@ -19,7 +17,7 @@ GESTURE_MODEL = MODELS_DIR / "gesture_model.pt"
 LABELS_ALPHABET = CODE_DIR / "config" / "labels_alphabet.txt"
 LABELS_GESTURE = CODE_DIR / "config" / "labels_gesture.txt"
 
-CAMERA_INDEX = 0                 # camera laptop thường là 0; nếu sai thử 1, 2
+CAMERA_INDEX = 0                 # nếu sai thử 1, 2
 FRAME_WIDTH, FRAME_HEIGHT = 1280, 720
 
 ALPHABET_SAMPLES_PER_LABEL = 250  # số frame mỗi người cho mỗi nhãn

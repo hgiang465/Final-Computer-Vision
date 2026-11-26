@@ -44,7 +44,6 @@ msg, msg_until = "", 0.0
 
 
 def commit_batch():
-    """Ghi batch hiện tại xuống CSV, nhớ vị trí để có thể hoàn tác."""
     global batch, last_batch_start
     if not batch:
         return
