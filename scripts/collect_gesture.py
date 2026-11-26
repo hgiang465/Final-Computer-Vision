@@ -1,14 +1,3 @@
-"""Thu dữ liệu MODULE 2 (cử chỉ có chuyển động) bằng camera laptop.
-
-Chạy:  python collect_gesture.py --person A
-Phím:  SPACE = quay 1 mẫu (đếm ngược 2 giây rồi ghi 1.5 giây) | n/p = cử chỉ kế/trước
-       u = xoá mẫu vừa quay | q = thoát
-Mỗi mẫu lưu thành 1 file data/gesture/<nhãn>/<người>_<thời gian>.npz gồm đúng 30 frame
-(đã resample theo thời gian nên không phụ thuộc FPS camera).
-
-MẸO: ngồi xa camera đủ để thấy CẢ HAI VAI và 2 bàn tay. Làm cử chỉ trọn vẹn trong ~1.5 giây.
-Với nhãn "idle": quay các tình huống KHÔNG ký hiệu (tay nghỉ, gãi đầu, vẫy linh tinh...).
-"""
 import argparse
 import time
 
@@ -105,7 +94,7 @@ while True:
         (f"Tay: {'thấy' if fl.hand_present.any() else 'KHÔNG thấy'}   Vai/thân: {'thấy' if fl.pose_present else 'KHÔNG thấy'}",
          (15, 80), 22, (255, 255, 255)),
         (msg if time.time() < msg_until else "", (15, 110), 24, (0, 255, 255)),
-        ("SPACE: quay | n/p: đổi cử chỉ | u: xoá mẫu vừa rồi | q: thoát", (15, frame.shape[0] - 35), 22, (255, 255, 255)),
+        ("SPACE: quay | n: đổi cử chỉ | d: xoá mẫu mới nhất | q: thoát", (15, frame.shape[0] - 35), 22, (255, 255, 255)),
     ]
     draw_texts(frame, items, panel=(0, 0, frame.shape[1], 145))
     cv2.imshow("Thu du lieu - cu chi", frame)
@@ -115,13 +104,18 @@ while True:
         state, state_start = "countdown", now
     elif key in (ord("n"), ord("p")) and state == "idle":
         idx = min(idx + 1, len(labels) - 1) if key == ord("n") else max(idx - 1, 0)
-    elif key == ord("u") and last_saved is not None and state == "idle":
-        try:
-            last_saved.unlink()
-            msg = "Đã xoá mẫu vừa quay."
-        except OSError:
-            msg = "Không xoá được."
-        last_saved, msg_until = None, time.time() + 3
+    elif key == ord("d") and state == "idle":
+        if last_saved is None:
+            msg = "Chưa có mẫu mới nào trong phiên để xoá."
+        else:
+            try:
+                last_saved.unlink()
+            except OSError as exc:
+                msg = f"Không xoá được mẫu: {exc}"
+            else:
+                last_saved = None
+                msg = "Đã xoá mẫu mới nhất vừa quay."
+        msg_until = time.time() + 3
     elif key == ord("q"):
         break
 
