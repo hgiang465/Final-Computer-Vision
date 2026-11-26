@@ -1,10 +1,3 @@
-"""Thu dữ liệu MODULE 1 (bảng chữ cái, ký hiệu tĩnh) bằng camera laptop.
-
-Chạy:  python collect_alphabet.py --person A      (mỗi thành viên dùng mã --person khác: A, B, C...)
-Phím:  r = bắt đầu/dừng ghi nhãn hiện tại | n = nhãn kế | p = nhãn trước | u = hoàn tác lần ghi vừa rồi | q = thoát
-Dữ liệu ghi nối tiếp vào data/alphabet.csv (chạy lại không mất dữ liệu cũ).
-Mỗi dòng: person, label, x0,y0,z0,...,x20,y20,z20 (toạ độ thô, chưa chuẩn hóa).
-"""
 import argparse
 import csv
 import os
@@ -78,7 +71,7 @@ while True:
          f"(đã lưu cho nhãn này: {counts[labels[idx]]})   [{status}]", (15, 48), 24, color),
         ("Không thấy tay!" if hand is None else "", (15, 80), 24, (0, 165, 255)),
         (msg if time.time() < msg_until else "", (15, 110), 24, (0, 255, 255)),
-        ("r: ghi/dừng | n: nhãn kế | p: nhãn trước | u: hoàn tác | q: thoát", (15, frame.shape[0] - 35), 22, (255, 255, 255)),
+        ("r: ghi/dừng | n: nhãn kế | p: nhãn trước | d (u): xoá batch mới nhất | q: thoát", (15, frame.shape[0] - 35), 22, (255, 255, 255)),
     ]
     draw_texts(frame, items, panel=(0, 0, frame.shape[1], 145))
     cv2.imshow("Thu du lieu - bang chu cai", frame)
@@ -95,17 +88,20 @@ while True:
             recording = False
             commit_batch()
         idx = min(idx + 1, len(labels) - 1) if key == ord("n") else max(idx - 1, 0)
-    elif key == ord("u") and last_batch_start is not None and not recording:
-        removed = os.path.getsize(csv_path) - last_batch_start
-        os.truncate(csv_path, last_batch_start)
-        last_batch_start = None
-        # tính lại bộ đếm từ file
-        counts.clear()
-        with open(csv_path, newline="", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                if row["person"] == args.person:
-                    counts[row["label"]] += 1
-        msg, msg_until = "Đã hoàn tác lần ghi vừa rồi.", time.time() + 3
+    elif key in (ord("d"), ord("u")) and not recording:
+        if last_batch_start is None:
+            msg = "Chưa có batch mới nào trong phiên để xoá."
+        else:
+            os.truncate(csv_path, last_batch_start)
+            last_batch_start = None
+            # tính lại bộ đếm từ file
+            counts.clear()
+            with open(csv_path, newline="", encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    if row["person"] == args.person:
+                        counts[row["label"]] += 1
+            msg = "Đã xoá batch vừa ghi gần nhất."
+        msg_until = time.time() + 3
     elif key == ord("q"):
         break
 
