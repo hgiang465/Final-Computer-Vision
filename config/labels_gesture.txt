@@ -1,22 +1,16 @@
 idle
-bạn
 xin chào
+tạm biệt
 cảm ơn
 xin lỗi
-tạm biệt
-có
-không
-yêu
-giúp đỡ
+tôi
+bạn
 tên
-vui
-buồn
-đói
-khát
-ăn
-uống
+tuổi
+sống
 khỏe
-đau
+có 
+không
 DAU_SAC
 DAU_HUYEN
 DAU_HOI
