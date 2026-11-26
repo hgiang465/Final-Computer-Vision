@@ -1,4 +1,3 @@
-"""Vẽ chữ Unicode (tiếng Việt có dấu) lên ảnh OpenCV. cv2.putText không hỗ trợ dấu nên dùng Pillow."""
 import os
 import unicodedata
 

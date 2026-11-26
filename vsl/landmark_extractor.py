@@ -1,9 +1,3 @@
-"""Trích xuất landmark bàn tay (và tư thế) bằng MediaPipe.
-
-Tự chọn backend:
-  - API cũ  mp.solutions   (mediapipe <= 0.10.21)
-  - API mới MediaPipe Tasks (mediapipe >= 0.10.30, đã bỏ mp.solutions) -> tự tải file model .task lần đầu chạy.
-"""
 import time
 import urllib.request
 from dataclasses import dataclass, field

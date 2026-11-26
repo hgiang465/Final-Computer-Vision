@@ -1,4 +1,3 @@
-"""Mô hình chuỗi cho MODULE 2 (LSTM / GRU) bằng PyTorch."""
 import torch
 import torch.nn as nn
 

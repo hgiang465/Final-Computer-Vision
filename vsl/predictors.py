@@ -1,4 +1,3 @@
-"""Bộ dự đoán dùng trong app: tải model đã train và dự đoán từ landmark."""
 import joblib
 import numpy as np
 
