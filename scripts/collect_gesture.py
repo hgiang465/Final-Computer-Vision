@@ -94,7 +94,11 @@ while True:
         (f"Tay: {'thấy' if fl.hand_present.any() else 'KHÔNG thấy'}   Vai/thân: {'thấy' if fl.pose_present else 'KHÔNG thấy'}",
          (15, 80), 22, (255, 255, 255)),
         (msg if time.time() < msg_until else "", (15, 110), 24, (0, 255, 255)),
+<<<<<<< HEAD
         ("SPACE: quay | n: đổi cử chỉ | d: xoá mẫu mới nhất | q: thoát", (15, frame.shape[0] - 35), 22, (255, 255, 255)),
+=======
+        ("SPACE: quay | n/p: đổi cử chỉ | d: xoá mẫu mới nhất | q: thoát", (15, frame.shape[0] - 35), 22, (255, 255, 255)),
+>>>>>>> a425c73f628735b293924b41f13d576ca4f57e16
     ]
     draw_texts(frame, items, panel=(0, 0, frame.shape[1], 145))
     cv2.imshow("Thu du lieu - cu chi", frame)
